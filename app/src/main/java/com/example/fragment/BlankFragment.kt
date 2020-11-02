@@ -18,10 +18,24 @@ import java.util.*
 /**
  * A simple [Fragment] subclass.
  */
-class BlankFragment : Fragment() {
+class BlankFragment : Fragment() , InputStudentDialog.Callbacks {
+    override fun onStudentAdd(student: Student)
+    {
+        studentListView.addStudent(student)
+        updateUI()
+
+    }
+
+    override fun onStudentDelete(position: Int)
+    {
+        studentListView.deleteStudent(position)
+        updateUI()
+
+    }
 
     private lateinit var stuRecyclerView: RecyclerView
     private var adapter:  StudentAdapter? = null
+    private lateinit var noData: TextView
     private val studentListView: StudentListViewModel by lazy {
         ViewModelProviders.of(this).get(StudentListViewModel::class.java)
     }
@@ -37,7 +51,7 @@ class BlankFragment : Fragment() {
             view.findViewById(R.id.stu_recycler_view) as RecyclerView
         stuRecyclerView.layoutManager = LinearLayoutManager(context)
 
-
+        noData = view.findViewById(R.id.empty_list_tv) as TextView
         updateUI()
         return view
     }
@@ -64,9 +78,10 @@ class BlankFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.new_student -> {
-
-                studentListView.addStudent(Student(UUID.randomUUID(),"Ahmed",9,true))
-                updateUI()
+                InputStudentDialog.newInstance().apply {
+                    setTargetFragment(this@BlankFragment,0)
+                    show(this@BlankFragment.requireFragmentManager(),"Input")
+                }
                 true
             }
             else -> return super.onOptionsItemSelected(item)
@@ -75,12 +90,20 @@ class BlankFragment : Fragment() {
 
 
 
-    private inner class StudentHolder(view: View) : RecyclerView.ViewHolder(view) {
+    private inner class StudentHolder(view: View) : RecyclerView.ViewHolder(view) , View.OnClickListener {
+
+
+
         private lateinit var student: Student
 
         val nameTextView: TextView = itemView.findViewById(R.id.stu_name)
         val passTextView: TextView = itemView.findViewById(R.id.stu_pass)
+        var deleteBtn : Button = itemView.findViewById(R.id.delete_btn)
 
+
+            init {
+                     deleteBtn.setOnClickListener(this)
+            }
 
         fun bind(student: Student) {
             this.student = student
@@ -88,6 +111,13 @@ class BlankFragment : Fragment() {
             passTextView.text = this.student.stuPass.toString()
 
 
+        }
+
+
+
+        override fun onClick(v: View?)
+        {
+            onStudentDelete(adapterPosition)
         }
     }
 
@@ -100,7 +130,14 @@ class BlankFragment : Fragment() {
                 return StudentHolder(view)
             }
 
-            override fun getItemCount() = students.size
+            override fun getItemCount() :Int
+            {
+                if (students.isEmpty())
+                    noData.visibility=View.VISIBLE
+                else
+                    noData.visibility= View.GONE
+                return students.size
+            }
 
 
             override fun onBindViewHolder(holder: StudentHolder, position: Int) {

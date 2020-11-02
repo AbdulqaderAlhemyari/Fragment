@@ -22,4 +22,9 @@ class StudentListViewModel  : ViewModel() {
     {
         students.add(student)
     }
+
+    fun deleteStudent(index: Int) {
+        students.removeAt(index)
+
+    }
 }
